@@ -6,15 +6,20 @@
 # between Leap Motion and you, your company or other organization.             #
 ################################################################################
 
-import os, sys, inspect, thread, time
+import sys
+#sys.path.insert(0, "C:\Users\User\Desktop\LeapDeveloperKit_2.3.0+31543_win\LeapSDK\lib\x64")
+import os, sys, inspect
 src_dir = os.path.dirname(inspect.getfile(inspect.currentframe()))
-# Windows and Linux
-arch_dir = '../lib/x64' if sys.maxsize > 2**32 else '../lib/x86'
-
-sys.path.insert(0, os.path.abspath(os.path.join(src_dir, arch_dir)))
-
-import Leap, sys, thread, time
+lib_dir = os.path.abspath(os.path.join(src_dir, '../lib'))
+sys.path.insert(0, lib_dir)
+import Leap
+import thread
+import time
+import Leap
 from Leap import CircleGesture, KeyTapGesture, ScreenTapGesture, SwipeGesture
+import numpy as np
+import matplotlib.pyplot as plt
+from PIL import Image
 
 
 class SampleListener(Leap.Listener):
@@ -44,16 +49,25 @@ class SampleListener(Leap.Listener):
     def on_frame(self, controller):
         # Get the most recent frame and report some basic information
         frame = controller.frame()
-
+        
+    
+        image_list = frame.images
+        left_image = image_list[0]
+        right_image = image_list[1]        
         print "Frame id: %d, timestamp: %d, hands: %d, fingers: %d, tools: %d, gestures: %d" % (
               frame.id, frame.timestamp, len(frame.hands), len(frame.fingers), len(frame.tools), len(frame.gestures()))
 
+        #print left_image
+        
+        #pylab.imshow(left_image)
+        #pylab.show()
+        #plt.gray()
         # Get hands
         for hand in frame.hands:
 
             handType = "Left hand" if hand.is_left else "Right hand"
 
-            print "  %s, id %d, position: %s" % (
+            print "  %s, id %d, posicion palma: %s" % (
                 handType, hand.id, hand.palm_position)
 
             # Get the hand's normal vector and direction
@@ -68,28 +82,38 @@ class SampleListener(Leap.Listener):
 
             # Get arm bone
             arm = hand.arm
-            print "  Arm direction: %s, wrist position: %s, elbow position: %s" % (
-                arm.direction,
-                arm.wrist_position,
-                arm.elbow_position)
+        #    print "  Arm direction: %s, wrist position: %s, elbow position: %s" % (
+               # arm.direction,
+               # arm.wrist_position,
+               # arm.elbow_position)
 
             # Get fingers
             for finger in hand.fingers:
-
-                print "    %s finger, id: %d, length: %fmm, width: %fmm" % (
-                    self.finger_names[finger.type],
-                    finger.id,
-                    finger.length,
-                    finger.width)
+                #print "FINGER"
+                #determina la caja de interaccion de la mano...hay ue darle un poco mas pues el campo
+                #de vision es un poco mayor que  400 X 600 
+                interaction_box = frame.interaction_box
+                app_width = 700
+                app_height = 500
+                i_box = frame.interaction_box
+                normalized_tip = i_box.normalize_point(finger.tip_position)
+                app_x = app_width  * normalized_tip.x
+                app_y = app_height * (1 - normalized_tip.y)
+               # print " %f app_x, %f app_y ... " % (app_x, app_y)
+               # print "    %s finger, id: %d, length: %fmm, width: %fmm" % (
+                #    self.finger_names[finger.type],
+                 #   finger.id,
+                  #  finger.length,
+                   # finger.width)
 
                 # Get bones
                 for b in range(0, 4):
                     bone = finger.bone(b)
-                    print "      Bone: %s, start: %s, end: %s, direction: %s" % (
-                        self.bone_names[bone.type],
-                        bone.prev_joint,
-                        bone.next_joint,
-                        bone.direction)
+          #          print "      Bone: %s, start: %s, end: %s, direction: %s" % (
+                    #    self.bone_names[bone.type],
+                     #   bone.prev_joint,
+                      #  bone.next_joint,
+                      #  bone.direction)
 
         # Get tools
         for tool in frame.tools:
@@ -100,6 +124,7 @@ class SampleListener(Leap.Listener):
         # Get gestures
         for gesture in frame.gestures():
             if gesture.type == Leap.Gesture.TYPE_CIRCLE:
+                print "HAGO UN CIRCULO"
                 circle = CircleGesture(gesture)
 
                 # Determine clock direction using the angle between the pointable and the circle normal
@@ -119,22 +144,25 @@ class SampleListener(Leap.Listener):
                         circle.progress, circle.radius, swept_angle * Leap.RAD_TO_DEG, clockwiseness)
 
             if gesture.type == Leap.Gesture.TYPE_SWIPE:
+                print "HAGO SWIPE!"
                 swipe = SwipeGesture(gesture)
-                print "  Swipe id: %d, state: %s, position: %s, direction: %s, speed: %f" % (
-                        gesture.id, self.state_names[gesture.state],
-                        swipe.position, swipe.direction, swipe.speed)
+                #print "  Swipe id: %d, state: %s, position: %s, direction: %s, speed: %f" % (
+                #        gesture.id, self.state_names[gesture.state],
+                #        swipe.position, swipe.direction, swipe.speed)
 
             if gesture.type == Leap.Gesture.TYPE_KEY_TAP:
+                print "HICE KEYTAP"
                 keytap = KeyTapGesture(gesture)
-                print "  Key Tap id: %d, %s, position: %s, direction: %s" % (
-                        gesture.id, self.state_names[gesture.state],
-                        keytap.position, keytap.direction )
+                #print "  Key Tap id: %d, %s, position: %s, direction: %s" % (
+                #        gesture.id, self.state_names[gesture.state],
+                #        keytap.position, keytap.direction )
 
             if gesture.type == Leap.Gesture.TYPE_SCREEN_TAP:
+                print "SCREENT}AP!!!!!!"
                 screentap = ScreenTapGesture(gesture)
-                print "  Screen Tap id: %d, %s, position: %s, direction: %s" % (
-                        gesture.id, self.state_names[gesture.state],
-                        screentap.position, screentap.direction )
+                #print "  Screen Tap id: %d, %s, position: %s, direction: %s" % (
+                #        gesture.id, self.state_names[gesture.state],
+                #        screentap.position, screentap.direction )
 
         if not (frame.hands.is_empty and frame.gestures().is_empty):
             print ""
