@@ -37,13 +37,12 @@ current = 0 #frame en el momento (actual)
 zoom = 1.0  #zoom en el momento (actual)
 
 
-
 class SampleListener(Leap.Listener):
     finger_names = ['Thumb', 'Index', 'Middle', 'Ring', 'Pinky']
     bone_names = ['Metacarpal', 'Proximal', 'Intermediate', 'Distal']
     state_names = ['STATE_INVALID', 'STATE_START', 'STATE_UPDATE', 'STATE_END']
-    min_largo = 100.0
-    min_velocidad = 10
+    min_largo = 200.0
+    min_velocidad = 50
     
     def on_init(self, controller):
         print "Initialized"
@@ -71,8 +70,22 @@ class SampleListener(Leap.Listener):
         # Get the most recent frame and report some basic information
         frame = controller.frame()
         previous = controller.frame(1)
+        previous2 = controller.frame(2)
+        previous3 = controller.frame(3)
 
-        for finger in hand.fingers:
+        #print "Frame id1: %d, Frame id2: %d, Frameid3: %d, Frameid4: %d" % (
+              #frame.id, previous.id, previous2.id, previous3.id)
+
+
+        for hand in frame.hands:
+            normal = hand.palm_normal
+            direction = hand.direction
+            posicion_palma = hand.palm_position
+            print "posicion palma:",hand.palm_position
+            print" palma: %f,%f , direccion: %f,%f"%(normal.x,normal.y,direction.x,direction.y)
+            #print(previous.hands[0].normal,previous.hands[0].direction)
+            # Get fingers
+            for finger in hand.fingers:
                 #print "FINGER"
                 #determina la caja de interaccion de la mano...hay ue darle un poco mas pues el campo
                 #de vision es un poco mayor que  400 X 600 
@@ -83,43 +96,34 @@ class SampleListener(Leap.Listener):
                 normalized_tip = i_box.normalize_point(finger.tip_position)
                 app_x = app_width  * normalized_tip.x
                 app_y = app_height * (1 - normalized_tip.y)
-               # print " %f app_x, %f app_y ... " % (app_x, app_y)
-               # print "    %s finger, id: %d, length: %fmm, width: %fmm" % (
-                #    self.finger_names[finger.type],
-                 #   finger.id,
-                  #  finger.length,
-                   # finger.width)
-
-                # Get bones
-                for b in range(0, 4):
-                    bone = finger.bone(b)
-          #          print "      Bone: %s, start: %s, end: %s, direction: %s" % (
-                    #    self.bone_names[bone.type],
-                     #   bone.prev_joint,
-                      #  bone.next_joint,
-                      #  bone.direction)
-
+                
+               
         # Girar Imagen entorno a eje y -- Si detecta un swipe hace el giro en la imagen
         for gesture in frame.gestures():
             if gesture.type == Leap.Gesture.TYPE_SWIPE:
                 print "HICE UN SWIP!"
                 swipe = SwipeGesture(gesture)
                 pos_swipe = swipe.position
-                if(pos_swipe.x > 0 and self.state_names[gesture.state] == "STATE_START"):
-                    print "Derecha a izquierda => Giro a la izquierda"
-                    current +=10%frames
+                #if(pos_swipe.x > 0 and swipe.direction.x < 0 and self.state_names[gesture.state] == "STATE_START"):
+                if(swipe.direction.x < 0 and self.state_names[gesture.state] == "STATE_START"):
+                    print "Derecha a izquierda!"
+                    print "Pos_swipe:",pos_swipe
+                    current += 10%frames
+                    hacer(im, frames, angulos,current,zoom) 
+                elif(swipe.direction.x > 0 and self.state_names[gesture.state] == "STATE_START"):
+                    print " Izquierda a Derecha!"
+                    print "Pos_swipe:",pos_swipe
+                    current -= 10 %frames
                     hacer(im, frames, angulos,current,zoom)
-                elif(pos_swipe.x < 0 and self.state_names[gesture.state] == "STATE_START"):
-                    print "Izquierda a derecha => Giro a la derecha"
-                    current -=10 %frames
-                    hacer(im, frames, angulos,current,zoom)
-                print " Swipe id: %d, state: %s, position: %s, direction: %s, speed: %f"% (gesture.id, self.state_names[gesture.state],swipe.position, swipe.direction, swipe.speed)
-                
+                #print " Swipe id: %d, state: %s, position: %s, direction: %s, speed: %f"% (gesture.id, self.state_names[gesture.state],swipe.position, swipe.direction, swipe.speed)
+                print "Swipe direction:",swipe.direction.x
+                break
         
             if gesture.type == Leap.Gesture.TYPE_KEY_TAP:
             	print "Hice un KEY TAP!!"
                 keytap = KeyTapGesture(gesture)
                 hacer(im, frames, angulos,current,zoom)
+                break
 
             if gesture.type == Leap.Gesture.TYPE_SCREEN_TAP:
                 screentap = ScreenTapGesture(gesture)
@@ -127,6 +131,7 @@ class SampleListener(Leap.Listener):
                 print "  Screen Tap id: %d, %s, position: %s, direction: %s" % (
                         gesture.id, self.state_names[gesture.state],
                         screentap.position, screentap.direction )
+                break
 
             # Futuro => Rotar entorno eje z     
             if gesture.type == Leap.Gesture.TYPE_CIRCLE:
@@ -148,6 +153,8 @@ class SampleListener(Leap.Listener):
                         gesture.id, self.state_names[gesture.state],
                         circle.progress, circle.radius, swept_angle * Leap.RAD_TO_DEG, clockwiseness)
                 hacer(im, frames, angulos,current,zoom)
+                break
+
 
 
 
