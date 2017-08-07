@@ -101,20 +101,23 @@ class SampleListener(Leap.Listener):
         # Girar Imagen entorno a eje y -- Si detecta un swipe hace el giro en la imagen
         for gesture in frame.gestures():
             if gesture.type == Leap.Gesture.TYPE_SWIPE:
-                print "HICE UN SWIP!"
+                print "SWIP DETECTADO!"
                 swipe = SwipeGesture(gesture)
                 pos_swipe = swipe.position
-                #if(pos_swipe.x > 0 and swipe.direction.x < 0 and self.state_names[gesture.state] == "STATE_START"):
+                speed_swipe = swipe.speed/10
+                # Cantidad de frames a girar, es proporcional a la velocidad de swipe
                 if(swipe.direction.x < 0 and self.state_names[gesture.state] == "STATE_START"):
-                    print "Derecha a izquierda!"
+                    print "Direccion Swip : Derecha a izquierda!"
                     print "Pos_swipe:",pos_swipe
-                    current += 10%frames
-                    hacer(im, frames, angulos,current,zoom) 
+                    current += int(speed_swipe %frames)
+                    #hacer(im, frames, angulos,current,zoom) <- Si se utiliza zoom
+                    hacer(im,frames,current)
                 elif(swipe.direction.x > 0 and self.state_names[gesture.state] == "STATE_START"):
-                    print " Izquierda a Derecha!"
+                    print "Direccion Swip : Izquierda a Derecha!"
                     print "Pos_swipe:",pos_swipe
-                    current -= 10 %frames
-                    hacer(im, frames, angulos,current,zoom)
+                    current -= int(speed_swipe %frames)
+                    #hacer(im, frames, angulos,current,zoom) <- Si se utiliza zoom
+                    hacer(im,frames,current)
                 #print " Swipe id: %d, state: %s, position: %s, direction: %s, speed: %f"% (gesture.id, self.state_names[gesture.state],swipe.position, swipe.direction, swipe.speed)
                 print "Swipe direction:",swipe.direction.x
                 break
@@ -122,7 +125,8 @@ class SampleListener(Leap.Listener):
             if gesture.type == Leap.Gesture.TYPE_KEY_TAP:
             	print "Hice un KEY TAP!!"
                 keytap = KeyTapGesture(gesture)
-                hacer(im, frames, angulos,current,zoom)
+                #hacer(im, frames, angulos,current,zoom)
+                hacer(im,frames,current)
                 break
 
             if gesture.type == Leap.Gesture.TYPE_SCREEN_TAP:
@@ -152,7 +156,7 @@ class SampleListener(Leap.Listener):
                 print "  Circle id: %d, %s, progress: %f, radius: %f, angle: %f degrees, %s" % (
                         gesture.id, self.state_names[gesture.state],
                         circle.progress, circle.radius, swept_angle * Leap.RAD_TO_DEG, clockwiseness)
-                hacer(im, frames, angulos,current,zoom)
+                hacer(im, frames,current)
                 break
 
 
