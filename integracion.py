@@ -33,9 +33,8 @@ print "La imagen tiene %d frames"%(frames)
 ##------------------DATOS NECESARIOS-----------------------------
 
 #Movimiento de la imagen a traves de actual
-current = 0 #frame en el momento (actual)
-zoom = 1.0  #zoom en el momento (actual)
-
+#current = 0
+#zoom = 1.0
 
 class SampleListener(Leap.Listener):
     finger_names = ['Thumb', 'Index', 'Middle', 'Ring', 'Pinky']
@@ -43,7 +42,9 @@ class SampleListener(Leap.Listener):
     state_names = ['STATE_INVALID', 'STATE_START', 'STATE_UPDATE', 'STATE_END']
     min_largo = 200.0
     min_velocidad = 50
-    
+    current = 0
+    zoom = 1.0
+
     def on_init(self, controller):
         print "Initialized"
 
@@ -66,16 +67,14 @@ class SampleListener(Leap.Listener):
     def on_exit(self, controller):
         print "Exited"
 
-    def on_frame(self, controller,current=0,zoom=1):
+    def on_frame(self, controller,current=0,zoom=1.0):
         # Get the most recent frame and report some basic information
         frame = controller.frame()
         previous = controller.frame(1)
         previous2 = controller.frame(2)
         previous3 = controller.frame(3)
-
         #print "Frame id1: %d, Frame id2: %d, Frameid3: %d, Frameid4: %d" % (
               #frame.id, previous.id, previous2.id, previous3.id)
-
 
         for hand in frame.hands:
             normal = hand.palm_normal
@@ -109,15 +108,15 @@ class SampleListener(Leap.Listener):
                 if(swipe.direction.x < 0 and self.state_names[gesture.state] == "STATE_START"):
                     print "Direccion Swip : Derecha a izquierda!"
                     print "Pos_swipe:",pos_swipe
-                    current += int(speed_swipe %frames)
+                    self.current += int(speed_swipe %frames)
                     #hacer(im, frames, angulos,current,zoom) <- Si se utiliza zoom
-                    hacer(im,frames,current)
+                    hacer(im,frames,self.current)
                 elif(swipe.direction.x > 0 and self.state_names[gesture.state] == "STATE_START"):
                     print "Direccion Swip : Izquierda a Derecha!"
                     print "Pos_swipe:",pos_swipe
-                    current -= int(speed_swipe %frames)
+                    self.current -= int(speed_swipe %frames)
                     #hacer(im, frames, angulos,current,zoom) <- Si se utiliza zoom
-                    hacer(im,frames,current)
+                    hacer(im,frames,self.current)
                 #print " Swipe id: %d, state: %s, position: %s, direction: %s, speed: %f"% (gesture.id, self.state_names[gesture.state],swipe.position, swipe.direction, swipe.speed)
                 print "Swipe direction:",swipe.direction.x
                 break
@@ -126,7 +125,7 @@ class SampleListener(Leap.Listener):
             	print "Hice un KEY TAP!!"
                 keytap = KeyTapGesture(gesture)
                 #hacer(im, frames, angulos,current,zoom)
-                hacer(im,frames,current)
+                hacer(im,frames,self.current)
                 break
 
             if gesture.type == Leap.Gesture.TYPE_SCREEN_TAP:
@@ -156,24 +155,8 @@ class SampleListener(Leap.Listener):
                 print "  Circle id: %d, %s, progress: %f, radius: %f, angle: %f degrees, %s" % (
                         gesture.id, self.state_names[gesture.state],
                         circle.progress, circle.radius, swept_angle * Leap.RAD_TO_DEG, clockwiseness)
-                hacer(im, frames,current)
+                hacer(im,frames,self.current)
                 break
-
-
-
-
-                """
-                if(previous):
-                	for prev_gesture in previous.gestures():
-                		if prev_gesture.type == Leap.Gesture.TYPE_SWIPE:
-                			prev_swipe = SwipeGesture(prev_gesture)
-                			prev_pos_swipe = prev_swipe.position
-
-                diferencia = (prev_pos_swipe - pos_swipe).magnitude
-                print"diferencia: %f"% diferencia
-                """
-                
-
         
         # Redimensionar Imagen => Con las 2 imagenes
 
