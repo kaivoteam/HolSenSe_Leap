@@ -31,11 +31,6 @@ print(im.format, im.size, im.mode)
 frames = cantidad_frames(im)+1 #asumiendo que los frames da vuelta 360
 print "La imagen tiene %d frames"%(frames)
 ##------------------DATOS NECESARIOS-----------------------------
-
-#Movimiento de la imagen a traves de actual
-#current = 0
-#zoom = 1.0
-
 class SampleListener(Leap.Listener):
     finger_names = ['Thumb', 'Index', 'Middle', 'Ring', 'Pinky']
     bone_names = ['Metacarpal', 'Proximal', 'Intermediate', 'Distal']
@@ -44,6 +39,10 @@ class SampleListener(Leap.Listener):
     min_velocidad = 50
     current = 0
     zoom = 1.0
+    x_prev = 0.0
+    y_prev= 0.0
+    app_x = 0.0
+    app_y = 0.0
 
     def on_init(self, controller):
         print "Initialized"
@@ -69,38 +68,76 @@ class SampleListener(Leap.Listener):
 
     def on_frame(self, controller,current=0,zoom=1.0):
         # Get the most recent frame and report some basic information
+        cont = 1
         frame = controller.frame()
         previous = controller.frame(1)
         previous2 = controller.frame(2)
         previous3 = controller.frame(3)
         #print "Frame id1: %d, Frame id2: %d, Frameid3: %d, Frameid4: %d" % (
               #frame.id, previous.id, previous2.id, previous3.id)
+        
 
+        ##ZOOM IN Y ZOOM OUT!!
+        print "CUANTAS MANOS HAY antes del for:",len(frame.hands)
         for hand in frame.hands:
-            normal = hand.palm_normal
-            direction = hand.direction
-            posicion_palma = hand.palm_position
-            print "posicion palma:",hand.palm_position
-            print" palma: %f,%f , direccion: %f,%f"%(normal.x,normal.y,direction.x,direction.y)
-            #print(previous.hands[0].normal,previous.hands[0].direction)
-            # Get fingers
-            for finger in hand.fingers:
-                #print "FINGER"
-                #determina la caja de interaccion de la mano...hay ue darle un poco mas pues el campo
-                #de vision es un poco mayor que  400 X 600 
+        	print "posicion palma:",hand.palm_position
+        	manos = len(frame.hands)
+        	print "antes:",manos
+	        if(manos > 1):  
+	        	print "asdfaASDADWAdaDEs"
+	        	if(manos==1):
+	        		print "ME METI AL BREAK !!!"
+	        		break
+	        	print "despues::",len(frame.hands)
+                print "ZOOM IN Y ZOOM OUT"
+                print "despues::",len(frame.hands)
+                #print "se que x_prev es %f y que y_prev original macro es %f" %(x_prev, y_prev) 
+                gesto = "zoom"
+                #swipe = SwipeGesture(gesture)
+                #velocidad = swipe.speed
+                #print velocidad
+                ## 
+                handType = "Left hand" if hand.is_left else "Right hand"
+                # CAJA 
                 interaction_box = frame.interaction_box
                 app_width = 700
                 app_height = 500
                 i_box = frame.interaction_box
-                normalized_tip = i_box.normalize_point(finger.tip_position)
-                app_x = app_width  * normalized_tip.x
-                app_y = app_height * (1 - normalized_tip.y)
-                
-               
-        # Girar Imagen entorno a eje y -- Si detecta un swipe hace el giro en la imagen
+                normalized_tip = i_box.normalize_point(hand.palm_position)
+                self.app_x = app_width  * normalized_tip.x
+                self.app_y = app_height * (1 - normalized_tip.y)
+                print "X es: %f , Y es: %f " % (self.app_x, self.app_y )
+                print hand.palm_velocity.x
+                print hand.palm_velocity.y           
+            
+                if cont==1: 
+                    delta_x = self.app_x - self.x_prev
+                    delta_y = self.app_y - self.y_prev
+                    print "el cambio en X es: %f, en Y es: %f" % (delta_x, delta_y)
+                    self.x_prev=self.app_x
+                    self.y_prev=self.app_y
+                    if delta_x >0: #in / out
+                        sentido = "out"
+                        self.zoom -= 0.1
+                        hacer(im,frames,self.current,self.zoom)
+                        print "HICISTE ZOOM OUT!!"
+                    else:
+                        sentido = "in"
+                        self.zoom += 0.1
+                        hacer(im,frames,self.current,self.zoom)
+                        print "HICISTE ZOOM IN!!"
+                    cont += 1
+            
+            
+	            
+	    
         for gesture in frame.gestures():
+        # SWIPES!      
             if gesture.type == Leap.Gesture.TYPE_SWIPE:
-                print "SWIP DETECTADO!"
+                # ZOOM IN Y ZOOM OUT
+
+                # Girar Imagen entorno a eje y -- Si detecta un swipe hace el giro en la imagen    
+                print "GIRO SWIP DETECTADO!"
                 swipe = SwipeGesture(gesture)
                 pos_swipe = swipe.position
                 speed_swipe = swipe.speed/10
@@ -120,7 +157,8 @@ class SampleListener(Leap.Listener):
                 #print " Swipe id: %d, state: %s, position: %s, direction: %s, speed: %f"% (gesture.id, self.state_names[gesture.state],swipe.position, swipe.direction, swipe.speed)
                 print "Swipe direction:",swipe.direction.x
                 break
-        
+            
+            
             if gesture.type == Leap.Gesture.TYPE_KEY_TAP:
             	print "Hice un KEY TAP!!"
                 keytap = KeyTapGesture(gesture)
@@ -136,32 +174,36 @@ class SampleListener(Leap.Listener):
                         screentap.position, screentap.direction )
                 break
 
-            # Futuro => Rotar entorno eje z     
+            # Futuro => Rotar entorno eje z
+                 
             if gesture.type == Leap.Gesture.TYPE_CIRCLE:
-                print "HICE UN CIRCULO!"
                 circle = CircleGesture(gesture)
-
-                # Determine clock direction using the angle between the pointable and the circle normal
+                print "CIRCULOOOOOOOOOOOOOOOOOOOOOO"
+                gesto= "circle"
                 if circle.pointable.direction.angle_to(circle.normal) <= Leap.PI/2:
                     clockwiseness = "clockwise"
                 else:
-                    clockwiseness = "counterclockwise"
-                # Calculate the angle swept since the last frame
+                    clockwiseness = "counterclockwise" 
+                sentido = clockwiseness
                 swept_angle = 0
                 if circle.state != Leap.Gesture.STATE_START:
                     previous_update = CircleGesture(controller.frame(1).gesture(circle.id))
                     swept_angle =  (circle.progress - previous_update.progress) * 2 * Leap.PI
-
-                print "  Circle id: %d, %s, progress: %f, radius: %f, angle: %f degrees, %s" % (
-                        gesture.id, self.state_names[gesture.state],
-                        circle.progress, circle.radius, swept_angle * Leap.RAD_TO_DEG, clockwiseness)
+                    var = swept_angle * Leap.RAD_TO_DEG
+                #print "  Circle id: %d, %s, progress: %f, radius: %f, angle: %f degrees, %s" % (
+                #        gesture.id, self.state_names[gesture.state],
+                #        circle.progress, circle.radius, swept_angle * Leap.RAD_TO_DEG, clockwiseness)
+                angulo = swept_angle * Leap.RAD_TO_DEG
+                velocidad = circle.radius
                 hacer(im,frames,self.current)
                 break
+            
         
         # Redimensionar Imagen => Con las 2 imagenes
 
         #Zoom in y Zoom out
         #Ver si afecta delay
+        """
         if(len(frame.hands)==2 and len(previous.hands)==2):
         	for hand in frame.hands:
         		#Ver diferencias de posicion en tiempos t y t+1, si (t+1 - t).x > 0 la mano va hacia la derecha, por lo tanto estoy agrandando
@@ -174,7 +216,7 @@ class SampleListener(Leap.Listener):
         		## Diferenciar con rotar imagen, velocidad
         	
         	print "Hay 2 manos!"
-
+        """
         
         """   
         for hand in frame.hands:
