@@ -128,18 +128,21 @@ class SampleListener(Leap.Listener):
                 print "GIRO SWIP DETECTADO!"
                 swipe = SwipeGesture(gesture)
                 pos_swipe = swipe.position
-                speed_swipe = swipe.speed/10
+                speed_swipe = swipe.speed/100
+                print "velocidad del swipe: ", speed_swipe
                 # Cantidad de frames a girar, es proporcional a la velocidad de swipe
                 if(swipe.direction.x < 0 and self.state_names[gesture.state] == "STATE_START"):
                     print "Direccion Swip : Derecha a izquierda!"
                     print "Pos_swipe:",pos_swipe
-                    self.current += int(speed_swipe %frames)
+                    self.current += int(speed_swipe)
+                    self.current = self.current %frames
                     #hacer(im, frames, angulos,current,zoom) <- Si se utiliza zoom
                     hacer(im,frames,self.current,self.zoom)
                 elif(swipe.direction.x > 0 and self.state_names[gesture.state] == "STATE_START"):
                     print "Direccion Swip : Izquierda a Derecha!"
                     print "Pos_swipe:",pos_swipe
-                    self.current -= int(speed_swipe %frames)
+                    self.current -= int(speed_swipe)
+                    self.current = self.current %frames
                     #hacer(im, frames, angulos,current,zoom) <- Si se utiliza zoom
                     hacer(im,frames,self.current,self.zoom)
                 #print " Swipe id: %d, state: %s, position: %s, direction: %s, speed: %f"% (gesture.id, self.state_names[gesture.state],swipe.position, swipe.direction, swipe.speed)
