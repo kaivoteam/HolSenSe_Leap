@@ -32,9 +32,6 @@ class SampleListener(Leap.Listener):
     state_names = ['STATE_INVALID', 'STATE_START', 'STATE_UPDATE', 'STATE_END']
     min_largo = 200.0
     min_velocidad = 50
-    current = 0
-    zoom = 1.0
-    rotacion = 0
     x_prev = 0.0
     y_prev= 0.0
     app_x = 0.0
@@ -62,7 +59,7 @@ class SampleListener(Leap.Listener):
     def on_exit(self, controller):
         print "Exited"
 
-    def on_frame(self, controller,current=0,zoom=1.0):
+    def on_frame(self, controller):
         # Get the most recent frame and report some basic information
         cont = 1
         frame = controller.frame()
@@ -81,9 +78,6 @@ class SampleListener(Leap.Listener):
             if(manos == 1):
                 continue
             gesto = "zoom"
-            #swipe = SwipeGesture(gesture)
-            #velocidad = swipe.speed
-            #print velocidad
             ## 
             handType = "Left hand" if hand.is_left else "Right hand"
             # CAJA 
@@ -106,12 +100,10 @@ class SampleListener(Leap.Listener):
                 self.x_prev=self.app_x
                 self.y_prev=self.app_y
                 if delta_x > 20 : #in / out
-                    self.zoom += 0.1
-                    hacer("3",self.zoom)
+                    hacer("3",0.1)
                     print "ZOOM IN"
                 elif(delta_x < -10): ## CORREGIR
-                    self.zoom -= 0.1
-                    hacer("4",self.zoom)
+                    hacer("4",-0.1)
                     print "HICISTE ZOOM OUT!!"
                 cont += 1
             break
@@ -131,19 +123,11 @@ class SampleListener(Leap.Listener):
                 if(swipe.direction.x < 0 and self.state_names[gesture.state] == "STATE_START"):
                     print "Direccion Swip : Derecha a izquierda!"
                     print "Pos_swipe:",pos_swipe
-                    self.current += int(speed_swipe)
-                    
-                    #hacer(im, frames, angulos,current,zoom) <- Si se utiliza zoom
                     hacer("2",int(speed_swipe),"")
-                    #hacer(im,frames,self.current,self.zoom)
                 elif(swipe.direction.x > 0 and self.state_names[gesture.state] == "STATE_START"):
                     print "Direccion Swip : Izquierda a Derecha!"
                     print "Pos_swipe:",pos_swipe
-                    self.current -= int(speed_swipe)
-                    
-                    #hacer(im, frames, angulos,current,zoom) <- Si se utiliza zoom
-                    hacer("1",int(speed_swipe),"")
-                    #hacer(im,frames,self.current,self.zoom)
+                    hacer("1",-int(speed_swipe),"")                
                 #print " Swipe id: %d, state: %s, position: %s, direction: %s, speed: %f"% (gesture.id, self.state_names[gesture.state],swipe.position, swipe.direction, swipe.speed)
                 print "Swipe direction:",swipe.direction.x
                 break
@@ -152,18 +136,20 @@ class SampleListener(Leap.Listener):
             
             if gesture.type == Leap.Gesture.TYPE_CIRCLE:
                 circle = CircleGesture(gesture)
-                print "CIRCULOOOOOOOOOOOOOOOOOOOOOO"
+                print "CIIIIRCULOOOOOOOOOOOOOOOOOOOOOO"
                 gesto= "circle"
                 if circle.pointable.direction.angle_to(circle.normal) <= Leap.PI/2:
                     clockwiseness = "clockwise"
                     print("sentido horario")
-                    self.rotacion += 30
-                    hacer("5",self.rotacion)
+                    hacer("5",30)
+                    break
                 else:
                     clockwiseness = "counterclockwise" 
-                    self.rotacion -= 30
                     print("sentido anti-horario")
-                    hacer("6",self.rotacion)
+                    hacer("6",-30)
+                    break
+
+                """
                 sentido = clockwiseness
                 swept_angle = 0
                 if circle.state != Leap.Gesture.STATE_START:
@@ -175,8 +161,8 @@ class SampleListener(Leap.Listener):
                 #        circle.progress, circle.radius, swept_angle * Leap.RAD_TO_DEG, clockwiseness)
                 angulo = swept_angle * Leap.RAD_TO_DEG
                 velocidad = circle.radius
-                #hacer(im,frames,self.current)
-                break
+                """
+                
             
     def state_string(self, state):
         if state == Leap.Gesture.STATE_START:
