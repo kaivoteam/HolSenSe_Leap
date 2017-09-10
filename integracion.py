@@ -17,11 +17,6 @@ from Leap import CircleGesture, KeyTapGesture, ScreenTapGesture, SwipeGesture
 from imports_imagenes import *
 
 ##------------------DATOS NECESARIOS-----------------------------
-##esto vendria definido de antemano (variables globales)
-
-#4 imagenes en 4 angulos
-angulos = [0.0, 90.0, 180.0, 270.0]
-
 name_image = raw_input("Nombre de imagen GIF: ")
 inicializar(name_image)
 
@@ -94,6 +89,7 @@ class SampleListener(Leap.Listener):
             manos = len(frame.hands)
             if(manos == 1):
                 continue
+                #else? break?
             gesto = "zoom"
             ## 
             handType = "Left hand" if hand.is_left else "Right hand"
@@ -113,16 +109,13 @@ class SampleListener(Leap.Listener):
             delta_y = app_y - y_prev
             print "El delta en X es: %f, en Y es: %f" % (delta_x, delta_y)
             if delta_x > 10 : #in / out
-                    hacer("3",0.5,"")
+                    hacer("3",0.3)
                     print "HICISTE ZOOM IN!!"
             elif(delta_x < -20): ## CORREGIR
-                    hacer("4",0.5,"")
+                    hacer("4",0.3)
                     print "HICISTE ZOOM OUT!!"
             break
-
             
-
-
             #Metodo anterior...
             
             #print hand.palm_velocity.x
@@ -151,6 +144,11 @@ class SampleListener(Leap.Listener):
                 # Girar Imagen entorno a eje y -- Si detecta un swipe hace el giro en la imagen    
                 print "GIRO SWIP DETECTADO!"
                 swipe = SwipeGesture(gesture)
+
+                #---> si swipe es en eje Y hacia abajo centrar
+                #if(swipe.direction.y #algo
+                    #hacer('-') #eso resetea
+
                 pos_swipe = swipe.position
                 
                 #Antes era / frames
@@ -161,14 +159,15 @@ class SampleListener(Leap.Listener):
                 if(swipe.direction.x < 0 and self.state_names[gesture.state] == "STATE_START"):
                     print "Direccion Swip : Derecha a izquierda!"
                     print "Pos_swipe:",pos_swipe
-                    hacer("2",0.25,"")
+                    hacer("2",0.25) #revisarla direccion de esto
                 elif(swipe.direction.x > 0 and self.state_names[gesture.state] == "STATE_START"):
                     print "Direccion Swip : Izquierda a Derecha!"
                     print "Pos_swipe:",pos_swipe
-                    hacer("1",0.25,"")                
+                    hacer("1",0.25)  #revisar la direccion de esto
                 #print " Swipe id: %d, state: %s, position: %s, direction: %s, speed: %f"% (gesture.id, self.state_names[gesture.state],swipe.position, swipe.direction, swipe.speed)
                 print "Swipe direction:",swipe.direction.x
                 break
+
 
             # Futuro => Rotar entorno eje z
             
@@ -178,7 +177,7 @@ class SampleListener(Leap.Listener):
                 # Determine clock direction using the angle between the pointable and the circle normal
                 if (circle.pointable.direction.angle_to(circle.normal) <= Leap.PI/2 and self.state_names[gesture.state] == "STATE_START"):
                     clockwiseness = "clockwise"
-                    hacer("5")
+                    hacer("5") #rota 180 grados
                 break
                 """
                 
