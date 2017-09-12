@@ -3,7 +3,7 @@ import numpy as np
 
 # Path para importar libreria Leap //Windows and Linux
 src_dir = os.path.dirname(inspect.getfile(inspect.currentframe()))
-arch_dir = '../lib/x64' if sys.maxsize > 2**32 else '../lib/x86'
+arch_dir = './lib/x64' if sys.maxsize > 2**32 else './lib/x86'
 sys.path.insert(0, os.path.abspath(os.path.join(src_dir, arch_dir)))
 
 # Librerias/Modulos relacionadas a Imagenes
@@ -27,10 +27,11 @@ class SampleListener(Leap.Listener):
     state_names = ['STATE_INVALID', 'STATE_START', 'STATE_UPDATE', 'STATE_END']
     min_largo = 200.0
     min_velocidad = 50
-    #x_prev = 0.0
-    #y_prev= 0.0
-    #app_x = 0.0
-    #app_y = 0.0
+
+    #para guardar la posicion del start de los gestos
+    x_start = 0
+    y_start = 0
+    z_start = 0
 
     def on_init(self, controller):
         print "Initialized"
@@ -63,7 +64,7 @@ class SampleListener(Leap.Listener):
         previous3 = controller.frame(3)
         previous4 = controller.frame(4)
         
-        if len(frame.hands) == 2:
+        if len(frame.hands) == 2: #ZOOM
             left= 0
             right=0
             for hand in previous.hands:
@@ -83,8 +84,6 @@ class SampleListener(Leap.Listener):
                 x_prev = app_width  * normalized_tip.x                
                 y_prev = app_height * (1 - normalized_tip.y)
                 for hand in frame.hands:
-                    gesto = "zoom"
-                    ## 
                     handType = "Left hand" if hand.is_left else "Right hand"
                     if handType==handTypeP:                        
                         # CAJA 
@@ -114,75 +113,85 @@ class SampleListener(Leap.Listener):
             if Leap.Gesture.TYPE_CIRCLE in lista_gesturetypes:#gesture.type == Leap.Gesture.TYPE_CIRCLE:
                 circle = CircleGesture(gesture)
                 print "Circulo CON %d manos" % len(frame.hands)
+                print "radio: ",circle.radius
                 # Determine clock direction using the angle between the pointable and the circle normal
-                if (self.state_names[gesture.state] == "STATE_START"):# and circle.radius < 50):
-                    #clockwiseness = "clockwise"
+                if (self.state_names[gesture.state] == "STATE_END" and circle.radius > 70):  #o menor a 80... y <50 con dedo
+                    #sino se podria agregar el progreso 
                     hacer("5") #rota 180 grados
             
-            # SWIPES!      
-            elif Leap.Gesture.TYPE_SWIPE in lista_gesturetypes:  #gesture.type == Leap.Gesture.TYPE_SWIPE:
+            # SWIPES!   
+            if Leap.Gesture.TYPE_SWIPE in lista_gesturetypes:  #gesture.type == Leap.Gesture.TYPE_SWIPE:
                 # Girar Imagen entorno a eje y -- Si detecta un swipe hace el giro en la imagen    
-                print "SWIP DETECTADO! CON %d MANOS " %  len(frame.hands)
                 swipe = SwipeGesture(gesture)
-                for hand in previous.hands:                
-                    # CAJA 
-                    interaction_box = frame.interaction_box
-                    app_width = 700
-                    app_height = 500
-                    app_depth = 500
+
+                # CAJA 
+                interaction_box = frame.interaction_box
+                app_width = 700
+                app_height = 500
+                app_depth = 500
+
+                print self.state_names[gesture.state] 
+                #guardar datos de caja de interaccion del primer frame
+                if self.state_names[gesture.state] == "STATE_START":
+                    hand = frame.hands[0]
                     i_box = frame.interaction_box
                     normalized_tip = i_box.normalize_point(hand.palm_position)
-                    x_prev = app_width  * normalized_tip.x                
-                    y_prev = app_height * (1 - normalized_tip.y)
-                    z_prev = app_depth * normalized_tip.z
+                    self.x_start = app_width  * normalized_tip.x                
+                    self.y_start = app_height * (1 - normalized_tip.y)
+                    self.z_start = app_depth * normalized_tip.z
+
+                elif self.state_names[gesture.state] == 'STATE_END':
                     for hand in frame.hands:
-                            interaction_box = frame.interaction_box
-                            i_box = frame.interaction_box
-                            normalized_tip = i_box.normalize_point(hand.palm_position)                           
-                            app_x = app_width  * normalized_tip.x
-                            app_y = app_height * (1 - normalized_tip.y)
-                            app_z = app_depth * normalized_tip.z
-                            delta_x = app_x - x_prev
-                            delta_y = app_y - y_prev
-                            delta_z = app_z - z_prev   
-                print "delta z: ",delta_z
-                print "delta_y es ", delta_y
-                print "delta x ee ", delta_x
-                #---> si swipe es en eje Y hacia abajo centrar
-                if(delta_y  > 12 and np.abs(delta_x) < 7 and np.abs(delta_z) <7 and self.state_names[gesture.state] == "STATE_START"): #algo
-                    hacer('7') #eso resetea
-                    print "ESTOY CENTRANDO!"
-                    return
+                        interaction_box = frame.interaction_box
+                        i_box = frame.interaction_box
+                        normalized_tip = i_box.normalize_point(hand.palm_position)                           
+                        x_end = app_width  * normalized_tip.x
+                        y_end = app_height * (1 - normalized_tip.y)
+                        z_end = app_depth * normalized_tip.z
+                        print "valor inciial: ",self.x_start
+                        delta_x = x_end - self.x_start
+                        delta_y = y_end - self.y_start
+                        delta_z = z_end - self.z_start
 
-                elif(swipe.direction.z < 0.9 and np.abs(delta_x)<7 and np.abs(delta_y)<7 and self.state_names[gesture.state] == "STATE_START"): #algo
-                    hacer('3',0.2) #eso resetea
-                    print "ESTOY HACIENDO ZOOM IN!"
-                    return
-                 
-                elif(swipe.direction.z > -0.9 and np.abs(delta_x)<7 and np.abs(delta_y)<7 and self.state_names[gesture.state] == "STATE_START"): #algo
-                    hacer('4',0.2) #eso resetea
-                    print "ESTOY HACIENDO ZOOM OUT!"
-                    return
-                
+                    #ejecutar cuando movimiento se termine 
+                	print "----------------------------------"  
+                	print self.state_names[gesture.state]
+                    print "delta z: ",delta_z
+                    print "delta_y es ", delta_y
+                    print "delta x ee ", delta_x
+                    print "direccion x del mov: ", swipe.direction.x
+                    print "direccion y del mov: ", swipe.direction.y
+                    print "direccion z del mov: ", swipe.direction.z
+                    #---> si swipe es en eje Y hacia abajo centrar
+                    if(swipe.direction.y < -0.5 and np.abs(delta_x) < 80 and np.abs(delta_z) < 80): #algo
+                        hacer('7') #eso resetea
+                        print "ESTOY CENTRANDO!"
+                        return
+                    elif(swipe.direction.z < -0.2 and np.abs(delta_x)<80 and np.abs(delta_y)<80 ): #algo
+                        hacer('4',0.2) #eso resetea
+                        print "ESTOY HACIENDO ZOOM IN! mediante swipe"
+                        return
+                     
+                    elif(swipe.direction.z > 0.2 and np.abs(delta_x)<80 and np.abs(delta_y)<80): #algo
+                        hacer('3',0.2) #eso resetea
+                        print "ESTOY HACIENDO ZOOM OUT! mediante swipe"
+                        return
+                    
+                    pos_swipe = swipe.position
+                    v_max = 400
+                    #Antes era / frames
+                    factor_mov = swipe.speed/v_max  #no funcionando
+    		      # Cantidad de frames a girar de escala 0 a 100
 
-                pos_swipe = swipe.position
-                v_max = 400
-                #Antes era / frames
-                factor_mov = swipe.speed/v_max 
-
-                # Cantidad de frames a girar de escala 0 a 100
-                print swipe.direction.x
-                if( swipe.direction.x < 0 and np.abs(delta_y) < 10 and np.abs(delta_z) <10 and self.state_names[gesture.state] == "STATE_START"):
-           #         print "Direccion Swip : Derecha a izquierda!"
-                    hacer("2",factor_mov) #revisar la direccion de esto
-                    print "Muevo de derecha a izquierda"
-                elif(swipe.direction.x > 0 and np.abs(delta_y) < 10 and np.abs(delta_z) <10  and self.state_names[gesture.state] == "STATE_START"):
-            #        print "Direccion Swip : Izquierda a Derecha!"
-            #        print "Pos_swipe:",pos_swipe
-                    hacer("1",factor_mov)  #revisar la direccion de esto
-                    print "Muevo de izquierda a derecha"
-                else:
-                    print "NO FUE NADA"
+                    #print swipe.direction.x
+                    if( swipe.direction.x < 0 and np.abs(delta_y)<80 and np.abs(delta_z)<80):
+                        hacer("1",0.1) #se le ve la derecha al obj
+                        print "Muevo de derecha a izquierda"
+                    elif(swipe.direction.x > 0 and np.abs(delta_y)<80 and np.abs(delta_z)<80):
+                        hacer("2",0.1) #se le ve la izquierda al obj
+                        print "Muevo de izquierda a derecha"
+                    else:
+                        print "NO FUE NADA"
                 
     def state_string(self, state):
         if state == Leap.Gesture.STATE_START:
