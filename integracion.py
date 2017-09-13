@@ -163,16 +163,16 @@ class SampleListener(Leap.Listener):
                     print "direccion y del mov: ", swipe.direction.y
                     print "direccion z del mov: ", swipe.direction.z
                     #---> si swipe es en eje Y hacia abajo centrar
-                    if(swipe.direction.y < -0.5 and np.abs(delta_x) < 80 and np.abs(delta_z) < 80): #algo
+                    if(swipe.direction.y < -0.5 and np.abs(delta_x) < 90 and np.abs(delta_z) < 90): #algo
                         hacer('7') #eso resetea
                         print "ESTOY CENTRANDO!"
                         return
-                    elif(swipe.direction.z < -0.2 and np.abs(delta_x)<80 and np.abs(delta_y)<80 ): #algo
+                    elif(swipe.direction.z < -0.5 and np.abs(delta_x)<90 and np.abs(delta_y)<90 ): #algo
                         hacer('4',0.2) #eso resetea
                         print "ESTOY HACIENDO ZOOM IN! mediante swipe"
                         return
                      
-                    elif(swipe.direction.z > 0.2 and np.abs(delta_x)<80 and np.abs(delta_y)<80): #algo
+                    elif(swipe.direction.z > 0.5 and np.abs(delta_x)<90 and np.abs(delta_y)<90): #algo
                         hacer('3',0.2) #eso resetea
                         print "ESTOY HACIENDO ZOOM OUT! mediante swipe"
                         return
@@ -184,10 +184,10 @@ class SampleListener(Leap.Listener):
     		      # Cantidad de frames a girar de escala 0 a 100
 
                     #print swipe.direction.x
-                    if( swipe.direction.x < 0 and np.abs(delta_y)<80 and np.abs(delta_z)<80):
+                    if( swipe.direction.x < 0 and np.abs(delta_y)<90 and np.abs(delta_z)<90):
                         hacer("1",0.1) #se le ve la derecha al obj
                         print "Muevo de derecha a izquierda"
-                    elif(swipe.direction.x > 0 and np.abs(delta_y)<80 and np.abs(delta_z)<80):
+                    elif(swipe.direction.x > 0 and np.abs(delta_y)<90 and np.abs(delta_z)<90):
                         hacer("2",0.1) #se le ve la izquierda al obj
                         print "Muevo de izquierda a derecha"
                     else:
